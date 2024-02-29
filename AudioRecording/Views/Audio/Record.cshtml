@@ -1,0 +1,56 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>Audio Recording</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/recorder.js/1.16.2/recorder.js"></script>
+    <script>
+        var recorder;
+        var isRecording = false;
+
+        function startRecording() {
+            if (!isRecording) {
+                navigator.mediaDevices.getUserMedia({ audio: true })
+                    .then(function (stream) {
+                        recorder = new Recorder(stream);
+                        recorder.record();
+                        isRecording = true;
+                        document.getElementById("startButton").innerText = "Stop Recording";
+                    })
+                    .catch(function (err) {
+                        console.error("Error accessing microphone:", err);
+                    });
+            } else {
+                stopRecording();
+            }
+        }
+
+        function stopRecording() {
+            if (isRecording) {
+                recorder.stop();
+                isRecording = false;
+                document.getElementById("startButton").innerText = "Start Recording";
+
+                recorder.exportWAV(function (blob) {
+                    var formData = new FormData();
+                    formData.append("audio", blob);
+
+                    fetch("Record/Audio", {
+                        method: "POST",
+                        body: formData
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            console.log("Recorded data:", data);
+                            // You can display the recording information (filename) here
+                        })
+                        .catch(error => console.error("Error:", error));
+                });
+            }
+        }
+    </script>
+</head>
+<body>
+    <h1>Audio Recording</h1>
+    <button id="startButton" onclick="startRecording()">Start Recording</button>
+</body>
+</html>
